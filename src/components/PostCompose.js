@@ -530,9 +530,12 @@ function PostCompose() {
               <Send size={16} />
             </Button>
           </div>
+
+          
         </Form>
       </div>
     </div>
+    
   );
 }
 
