@@ -22,6 +22,7 @@ function FollowingAccountItem(props) {
         followerId: localStorage.getItem("psnUserId"),
       })
     );
+    
     setFollowButtonTitle("Unfollowed");
     setTickIconStatus(true);
   }
@@ -30,7 +31,7 @@ function FollowingAccountItem(props) {
     dispatch(getProfileId(props.id));
   }
 
-  
+
   return (
     <tr style={{
       backgroundColor: 'rgba(37, 69, 195, 0.05)',
