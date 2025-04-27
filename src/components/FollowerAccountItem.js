@@ -15,6 +15,7 @@ function FollowerAccountItem(props) {
     (state) => state.followingAccountReducer.followingAccounts
   );
 
+  
   const [followButtonTitle, setFollowButtonTitle] = useState("Follow");
   const [tickIconStatus, setTickIconStatus] = useState(false);
 
