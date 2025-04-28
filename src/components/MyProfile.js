@@ -907,6 +907,7 @@ function MyProfile(props) {
                       borderRadius: "6px",
                       fontWeight: "500"
                     }}
+                    
                   >
                     {submitting ? "Saving..." : "Save Changes"}
                   </Button>

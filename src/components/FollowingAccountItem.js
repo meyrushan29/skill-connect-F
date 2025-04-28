@@ -12,6 +12,7 @@ function FollowingAccountItem(props) {
     (state) => state.checkProfileReducer.profileId
   );
 
+  
   const [followButtonTitle, setFollowButtonTitle] = useState("Unfollow");
   const [tickIconStatus, setTickIconStatus] = useState(false);
 

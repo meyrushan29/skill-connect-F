@@ -65,5 +65,7 @@ export const checkProfileSlice = createSlice({
 export const { getProfileId, setEditedPostContent } = checkProfileSlice.actions;
 
 
+
+
 // export const { getProfileId } = checkProfileSlice.actions;
 export default checkProfileSlice.reducer;
