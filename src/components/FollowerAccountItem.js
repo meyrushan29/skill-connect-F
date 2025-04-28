@@ -8,6 +8,7 @@ import { Check, UserPlus } from "lucide-react";
 
 function FollowerAccountItem(props) {
   const dispatch = useDispatch();
+  
   const selectedProfileId = useSelector(
     (state) => state.checkProfileReducer.profileId
   );
