@@ -58,10 +58,13 @@ function PostItem(props) {
     dispatch(getFollowingPosts());
   }
 
+  //commentstaus
   function handleCommentButtonClick(e) {
+
     setCommentStatus(!commentStatus);
   }
 
+  //commentcontentchange
   function handleCommentContentChange(e) {
     e.preventDefault();
 
