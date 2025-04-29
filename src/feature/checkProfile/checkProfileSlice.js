@@ -53,6 +53,7 @@ export const checkProfileSlice = createSlice({
       state.editedPostContent = action.payload;
     },
   },
+  
   extraReducers: (builder) => {
     builder.addCase(getProfilePosts.fulfilled, (state, action) => {
       state.postList = action.payload;
