@@ -11,8 +11,6 @@ function FollowingAccountItem(props) {
   const selectedProfileId = useSelector(
     (state) => state.checkProfileReducer.profileId
   );
-
-  
   const [followButtonTitle, setFollowButtonTitle] = useState("Unfollow");
   const [tickIconStatus, setTickIconStatus] = useState(false);
 
@@ -23,7 +21,6 @@ function FollowingAccountItem(props) {
         followerId: localStorage.getItem("psnUserId"),
       })
     );
-    
     setFollowButtonTitle("Unfollowed");
     setTickIconStatus(true);
   }
@@ -110,5 +107,4 @@ function FollowingAccountItem(props) {
     </tr>
   );
 }
-
 export default FollowingAccountItem;
