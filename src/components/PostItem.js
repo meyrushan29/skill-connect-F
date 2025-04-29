@@ -21,6 +21,8 @@ import {
 import MultiImageUploadView from "../feature/multiImageUploadView";
 import axios from "axios";
 
+
+
 function PostItem(props) {
   const dispatch = useDispatch();
 
@@ -105,7 +107,7 @@ function PostItem(props) {
   function handleCommentButtonClick(e) {
     setCommentStatus(!commentStatus);
   }
-
+  //commentcontent
   function handleCommentContentChange(e) {
     e.preventDefault();
     setCommentContent(e.target.value);
@@ -116,6 +118,7 @@ function PostItem(props) {
     }
   }
 
+  //sendcomment
   function sendComment(e) {
     dispatch(
       addComment({
