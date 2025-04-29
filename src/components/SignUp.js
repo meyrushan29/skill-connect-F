@@ -20,6 +20,9 @@ function SignUp() {
   const [snackbarMessage, setSnackbarMessage] = useState("");
   const [animationProgress, setAnimationProgress] = useState(0);
 
+
+  // Update Signup Coponenet   
+
   useEffect(() => {
     const timer = setTimeout(() => {
       setAnimationProgress(100);
@@ -112,6 +115,7 @@ function SignUp() {
       setSnackbarMessage("An error occurred during signup with Google");
       setSnackbarOpen(true);
     }
+
   }
 
   const handleAuth = (data) => {
