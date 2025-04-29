@@ -182,6 +182,8 @@ function PostCompose() {
     compressImageFile(e);
   }
 
+  // Update  base File 
+
   function fileToBase64(file, cb) {
     const reader = new FileReader();
     reader.readAsDataURL(file);
