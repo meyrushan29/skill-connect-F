@@ -422,9 +422,6 @@ function PostCompose() {
             </div>
           </div>
 
-          
-
-
           {/* Post Type Indicator */}
           <div style={{
             display: 'flex',
@@ -443,6 +440,7 @@ function PostCompose() {
             </span>
           </div>
 
+          
           <Form.Group style={{ marginBottom: '1rem' }}>
             <Form.Control
               as="textarea"
