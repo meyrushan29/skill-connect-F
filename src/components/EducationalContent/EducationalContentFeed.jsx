@@ -100,6 +100,7 @@ const EducationalContentFeed = ({ userId }) => {
           return updatedFeed;
         });
       }
+      
     } catch (error) {
       console.error("Error marking content as learned:", error);
     }
