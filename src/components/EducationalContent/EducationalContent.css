@@ -95,10 +95,10 @@
 .content-textarea {
   min-height: 200px;
 }
-
+/*css*/
 .submit-btn {
   background-color: #066e70;/*css*/
-  color: white;
+  color: rgb(176, 36, 36);
   padding: 12px 20px;
   border: none;
   border-radius: 8px;
