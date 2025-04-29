@@ -6,6 +6,8 @@ import { getProfileId } from "../feature/checkProfile/checkProfileSlice";
 import { followAccount } from "../feature/followingAccounts/followingAccountSlice";
 import { Check, UserPlus } from "lucide-react";
 
+
+
 function FollowerAccountItem(props) {
   const dispatch = useDispatch();
   
