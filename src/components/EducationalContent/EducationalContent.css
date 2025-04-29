@@ -42,7 +42,7 @@
   left: -50px;
   width: 200px;
   height: 200px;
-  background: rgba(124, 45, 18, 0.1);
+  background: rgba(18, 22, 124, 0.1);
   border-radius: 50%;
   animation: float 8s ease-in-out infinite;
   display: none;
@@ -65,7 +65,7 @@
   font-weight: 500;
   color: #19304f;
 }
-
+/*css*/
 .form-group input,
 .form-group textarea,
 .form-group select {
