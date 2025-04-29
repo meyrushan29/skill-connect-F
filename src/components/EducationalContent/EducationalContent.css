@@ -117,7 +117,7 @@
   transform: translateY(-2px);
   box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
 }
-
+/*nnnnn*/
 .submit-btn:disabled {
   background-color: #a0a0a0;
   cursor: not-allowed;
@@ -133,7 +133,7 @@
   color: #059669;
   border: 1px solid rgba(5, 150, 105, 0.2);
 }
-
+/*nnnnn*/
 .error-message {
   margin-top: 15px;
   padding: 12px;
