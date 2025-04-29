@@ -100,7 +100,7 @@ const EducationalContentFeed = ({ userId }) => {
           return updatedFeed;
         });
       }
-      
+
     } catch (error) {
       console.error("Error marking content as learned:", error);
     }
@@ -456,6 +456,7 @@ const EducationalContentFeed = ({ userId }) => {
           </Button>
         </Modal.Footer>
       </Modal>
+      
       
       {/* Delete Confirmation Modal */}
       <Modal show={showDeleteConfirm} onHide={() => setShowDeleteConfirm(false)}>
