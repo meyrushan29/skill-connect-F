@@ -80,6 +80,8 @@ function NewsFeedContent() {
         }}>Skill Connect</h1>
       </div>
 
+      {/* Create Post Button Update */}   
+         
       {/* Create Post Button */}
       <div style={{
         width: '100%',
@@ -170,6 +172,8 @@ function NewsFeedContent() {
         </div>
       )}
       
+
+    
       {/* Following Posts Header */}
       <div style={{
         textAlign: 'center',
