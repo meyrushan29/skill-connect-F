@@ -18,6 +18,7 @@
     "browser-image-compression": "^1.0.17",
     "firebase": "^11.6.0",
     "formik": "^2.2.9",
+    "framer-motion": "^12.9.2",
     "javascript-time-ago": "^2.3.10",
     "lucide-react": "^0.487.0",
     "psn-frontend": "file:",
@@ -58,5 +59,8 @@
       "last 1 safari version"
     ]
   },
-  "proxy": "http://localhost:8080"
+  "proxy": "http://localhost:8080",
+  "devDependencies": {
+    "tailwindcss": "^3.4.17"
+  }
 }
