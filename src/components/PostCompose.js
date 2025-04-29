@@ -422,6 +422,9 @@ function PostCompose() {
             </div>
           </div>
 
+          
+
+
           {/* Post Type Indicator */}
           <div style={{
             display: 'flex',
