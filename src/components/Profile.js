@@ -4,6 +4,8 @@ import { getProfilePosts } from "../feature/checkProfile/checkProfileSlice";
 import { getProfileInfo } from "../feature/checkProfile/checkProfileSlice";
 import PostItem from "./PostItem";
 
+//Profile Page create
+
 function Profile() {
   const dispatch = useDispatch();
   const userId = useSelector((state) => state.checkProfileReducer.profileId);
