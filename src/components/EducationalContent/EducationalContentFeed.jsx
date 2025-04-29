@@ -104,6 +104,7 @@ const EducationalContentFeed = ({ userId }) => {
       console.error("Error marking content as learned:", error);
     }
   };
+  
 
   const handleBookmark = async (contentId) => {
     try {
