@@ -58,13 +58,13 @@ function PostItem(props) {
     dispatch(getFollowingPosts());
   }
 
-  //commentstaus
+  //stausofcppment
   function handleCommentButtonClick(e) {
 
     setCommentStatus(!commentStatus);
   }
 
-  //commentcontentchange
+  //contentchange
   function handleCommentContentChange(e) {
     e.preventDefault();
 
@@ -76,8 +76,6 @@ function PostItem(props) {
       setSendButtonDisable(true);
     }
   }
-
-
 
   function sendComment(e) {
     dispatch(
@@ -96,6 +94,7 @@ function PostItem(props) {
     setCommentContent("");
   }
 
+
   return (
     <div>
       <div className="card">
@@ -104,7 +103,7 @@ function PostItem(props) {
             <img src={props.images ? props.images[0] : ""} alt="" className="imgdp" />
             <div>
               <p className="title m-0">{props.firstName + " " + props.lastName}</p>
-              <p className="m-0">{timeAgo.format(new Date(props.postDate).getTime())}</p>
+              <p className="m-10">{timeAgo.format(new Date(props.postDate).getTime())}</p>
             </div>
           </div>
           <MultiImageUploadView images={props.images} />
@@ -127,7 +126,7 @@ function PostItem(props) {
                 {props.loveList.length > 0 ? props.loveList.length : null}
               </span>
             </div>
-            <div className="mx-3">
+            <div className="mx-8">
               <span
                 className={`${styles.commentButton} mx-1 fs-4`}
                 onClick={handleCommentButtonClick}
