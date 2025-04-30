@@ -162,7 +162,9 @@ function FollowerList() {
                 </tr>
               )}
             </tbody>
+
           </table>
+          
         </div>
       </div>
     </div>
