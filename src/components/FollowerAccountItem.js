@@ -17,7 +17,6 @@ function FollowerAccountItem(props) {
     (state) => state.followingAccountReducer.followingAccounts
   );
 
-  
   const [followButtonTitle, setFollowButtonTitle] = useState("Follow");
   const [tickIconStatus, setTickIconStatus] = useState(false);
 
@@ -31,12 +30,9 @@ function FollowerAccountItem(props) {
     setFollowButtonTitle("Followed");
     setTickIconStatus(true);
   }
-
   function handleClick(e) {
     dispatch(getProfileId(props.id));
   }
-
-
 
   useEffect(() => {
     if (storeFollowingAccounts !== null) {
@@ -48,8 +44,6 @@ function FollowerAccountItem(props) {
       }
     }
   }, []);
-
-  
 
   return (
     <tr style={{
