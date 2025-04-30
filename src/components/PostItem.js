@@ -216,6 +216,7 @@ function PostItem(props) {
 
   const updateComment = () => {
     var data = {
+
       "commentEntity": {
         "userId": localStorage.getItem("psnUserId"),
         "userFullname": localStorage.getItem("psnUserFirstName") +
@@ -241,6 +242,7 @@ function PostItem(props) {
     });
   };
 
+  //deletecomment
   const deleteComment = (commentItem) => {
     setCeditComment(commentItem.content);
     setCurrentCommentitem(commentItem);

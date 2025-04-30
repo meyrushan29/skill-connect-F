@@ -7,7 +7,6 @@ import { followAccount } from "../feature/followingAccounts/followingAccountSlic
 import { Check, UserPlus } from "lucide-react";
 
 
-
 function FollowerAccountItem(props) {
   const dispatch = useDispatch();
   
@@ -37,6 +36,8 @@ function FollowerAccountItem(props) {
     dispatch(getProfileId(props.id));
   }
 
+
+
   useEffect(() => {
     if (storeFollowingAccounts !== null) {
       for (let i = 0; i < storeFollowingAccounts.length; i++) {
@@ -47,6 +48,8 @@ function FollowerAccountItem(props) {
       }
     }
   }, []);
+
+  
 
   return (
     <tr style={{
