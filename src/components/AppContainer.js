@@ -4,21 +4,21 @@ import {HashRouter, Routes, Route} from "react-router-dom";
 
 import HomePage from "./HomePage";
 import NotFoundPage from "./NotFoundPage";
-import SignIn from "./SignIn";
-import SignUp from "./SignUp";
-import NewsFeed from "./NewsFeed";
-import NewsFeedContent from "./NewsFeedContent";
-import FollowingList from "./FollowingList";
-import FollowerList from "./FollowerList";
+import SignIn from "./Authentication/SignIn";
+import SignUp from "./Authentication/SignUp";
+import NewsFeed from "./Navbar/NewsFeed";
+import NewsFeedContent from "./PostManagement/NewsFeedContent";
+import FollowingList from "./FollowComponents/FollowingList";
+import FollowerList from "./FollowComponents/FollowerList";
 import Profile from "./Profile";
-import MyProfile from "./MyProfile";
-import AllAccounts from "./AllAccounts";
-import UnauthorizedPage from "./UnauthorizedPage";
+import MyProfile from "./MyProfile/MyProfile";
+import AllAccounts from "./FollowComponents/AllAccounts";
+import UnauthorizedPage from "./Authentication/UnauthorizedPage";
 import SkilllinkLanding from "./SkilllinkLanding";
 import ProgressTracker from "../components/Progress/ProgressTracker";
 import ProgressDashboard from "../components/Progress/ProgressDashboard";
 import EducationalContentPage from "./EducationalContent/EducationalContentPage";
-import SocialNetworkPage from "./SocialNetworkPage";
+import SocialNetworkPage from "./FollowComponents/SocialNetworkPage";
 
 const userId = localStorage.getItem("psnUserId");
 

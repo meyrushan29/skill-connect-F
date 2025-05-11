@@ -9,7 +9,7 @@ import GoogleAuth from "./googleAuth";
 import { RiLoginBoxLine } from "react-icons/ri";
 import axios from "axios";
 import { Link, useNavigate } from "react-router-dom";
-import google from "./assets/images/google.png";
+import google from "../assets/images/google.png";
 import { Utensils } from 'lucide-react';
 import Snackbar from "@mui/material/Snackbar";
 import Alert from "@mui/material/Alert";
