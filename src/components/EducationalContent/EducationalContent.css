@@ -8,12 +8,13 @@
   padding: 20px;
   font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
   position: relative;
-  color: #f3f4f6;
+  color: #133578;
 }
+
 
 /* Form styles with theme colors */
 .edu-content-form {
-  background-color: rgba(255, 255, 255, 0.9);
+  background-color: rgba(188, 8, 8, 0.9);
   padding: 25px;
   border-radius: 16px;
   box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
@@ -21,7 +22,7 @@
   overflow: hidden;
 }
 
-/* Animation background elements */
+/* Animation background element */
 .edu-content-form::before {
   content: '';
   position: absolute;
@@ -41,7 +42,7 @@
   left: -50px;
   width: 200px;
   height: 200px;
-  background: rgba(124, 45, 18, 0.1);
+  background: rgba(18, 22, 124, 0.1);
   border-radius: 50%;
   animation: float 8s ease-in-out infinite;
   display: none;
@@ -64,7 +65,7 @@
   font-weight: 500;
   color: #19304f;
 }
-
+/*css*/
 .form-group input,
 .form-group textarea,
 .form-group select {
@@ -73,9 +74,10 @@
   border: 1px solid #d1d5db;
   border-radius: 8px;
   font-size: 16px;
-  background-color: white;
+  background-color: rgb(200, 23, 106);
   transition: all 0.3s ease;
 }
+/*css*/
 
 .form-group input:focus,
 .form-group textarea:focus,
@@ -84,19 +86,19 @@
   box-shadow: 0 0 0 3px rgba(217, 119, 6, 0.1);
   outline: none;
 }
-
+/*css*/
 .form-group textarea {
   min-height: 100px;
   resize: vertical;
 }
-
+/*css*/
 .content-textarea {
   min-height: 200px;
 }
-
+/*css*/
 .submit-btn {
-  background-color: #063970;
-  color: white;
+  background-color: #066e70;/*css*/
+  color: rgb(176, 36, 36);
   padding: 12px 20px;
   border: none;
   border-radius: 8px;
@@ -109,13 +111,13 @@
   justify-content: center;
   gap: 8px;
 }
-
+/*nnnnn*/
 .submit-btn:hover {
   background-color: #1c1cd2;
   transform: translateY(-2px);
   box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
 }
-
+/*nnnnn*/
 .submit-btn:disabled {
   background-color: #a0a0a0;
   cursor: not-allowed;
@@ -131,7 +133,7 @@
   color: #059669;
   border: 1px solid rgba(5, 150, 105, 0.2);
 }
-
+/*nnnnvbfmbnfmnbn*/
 .error-message {
   margin-top: 15px;
   padding: 12px;

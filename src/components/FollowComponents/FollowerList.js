@@ -1,13 +1,11 @@
 import React, { useState, useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom";
-import { getAllAccounts } from "../feature/followingAccounts/followingAccountSlice";
+import { getFollowerAccounts } from "../../feature/followingAccounts/followingAccountSlice";
 import FollowerAccountItem from "./FollowerAccountItem";
-import { Search } from "lucide-react";
-import { getFollowingAccounts } from "../feature/followingAccounts/followingAccountSlice";
+import { Users } from "lucide-react";
 
-
-function AllAccounts() {
+function FollowerList() {
   const navigate = useNavigate();
   const dispatch = useDispatch();
   const storeFollowerAccounts = useSelector(
@@ -15,20 +13,12 @@ function AllAccounts() {
   );
   const [animationProgress, setAnimationProgress] = useState(0);
 
-  useEffect (() => {
-    if (dispatch(getFollowingAccounts())){
-      dispatch(getAllAccounts());
-    }
-    }, [dispatch, getFollowingAccounts, getAllAccounts])
-
   useEffect(() => {
     if (localStorage.getItem("psnToken") === null) {
       navigate("/unauthorized");
     }
-    dispatch(getFollowingAccounts());
-   // dispatch(getAllAccounts());
-        
     
+    dispatch(getFollowerAccounts());
     
     // Animation effect
     const timer = setTimeout(() => {
@@ -121,17 +111,17 @@ function AllAccounts() {
             borderRadius: '0.75rem',
             marginRight: '1rem'
           }}>
-            <Search size={40} style={{ color: '#FFFFFF' }} />
+            <Users size={40} style={{ color: '#FFFFFF' }} />
           </div>
           <h1 style={{
             fontSize: '2.5rem',
-            color:'#063970',
             fontWeight: 'bold',
+            color:'#063970',
             letterSpacing: '-0.025em'
-          }}>Discover People</h1>
+          }}>Follower List</h1>
         </div>
 
-        {/* Account list content */}
+        {/* Follower accounts content */}
         <div style={{ 
           width: '100%',
           backgroundColor: 'rgba(255, 255, 255, 0.1)',
@@ -167,16 +157,18 @@ function AllAccounts() {
                     padding: '2rem',
                     color: 'black'
                   }}>
-                    No accounts found
+                    No followers found
                   </td>
                 </tr>
               )}
             </tbody>
+
           </table>
+          
         </div>
       </div>
     </div>
   );
 }
 
-export default AllAccounts;
+export default FollowerList;

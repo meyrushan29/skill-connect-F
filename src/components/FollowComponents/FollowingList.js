@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom";
-import { getFollowingAccounts } from "../feature/followingAccounts/followingAccountSlice";
+import { getFollowingAccounts } from "../../feature/followingAccounts/followingAccountSlice";
 import FollowingAccountItem from "./FollowingAccountItem";
 import { Users } from "lucide-react";
 

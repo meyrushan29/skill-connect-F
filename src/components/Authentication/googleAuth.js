@@ -1,7 +1,7 @@
 import React, { useState } from "react";
-import { auth, provider } from "./auth/firebaseConfig";
+import { auth, provider } from "../auth/firebaseConfig";
 import { signInWithPopup } from "firebase/auth";
-import google from "./assets/images/google.png";
+import google from "../assets/images/google.png";
 
 function GoogleAuth({ handleAuth }) {
     const handleClick = () => {
