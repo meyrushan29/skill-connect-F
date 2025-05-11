@@ -22,6 +22,8 @@ import {
 import MultiImageUploadView from "./multiImageUploadView";
 import axios from "axios";
 
+
+
 function PostItem(props) {
   const dispatch = useDispatch();
 
@@ -117,6 +119,7 @@ function PostItem(props) {
     }
   }
 
+  //sendcomment
   function sendComment(e) {
     dispatch(
       addComment({
@@ -214,6 +217,7 @@ function PostItem(props) {
 
   const updateComment = () => {
     var data = {
+
       "commentEntity": {
         "userId": localStorage.getItem("psnUserId"),
         "userFullname": localStorage.getItem("psnUserFirstName") +
@@ -239,6 +243,7 @@ function PostItem(props) {
     });
   };
 
+  //deletecomment
   const deleteComment = (commentItem) => {
     setCeditComment(commentItem.content);
     setCurrentCommentitem(commentItem);
