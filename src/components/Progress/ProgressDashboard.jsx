@@ -1,7 +1,8 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import axios from 'axios';
+import { LineChart, BarChart, User, RefreshCw, Filter, ChevronDown, Bell, Award, TrendingUp } from 'lucide-react';
 import { Spinner } from 'react-bootstrap';
-import { LineChart, BarChart, User } from 'lucide-react';
+import './ProgressDashboard.css';
 
 const ProgressDashboard = ({ userId }) => {
   const [progressItems, setProgressItems] = useState([]);
@@ -10,15 +11,23 @@ const ProgressDashboard = ({ userId }) => {
   const [categories, setCategories] = useState([]);
   const [selectedCategory, setSelectedCategory] = useState('all');
   const [animationProgress, setAnimationProgress] = useState(0);
+  const [lastUpdated, setLastUpdated] = useState(null);
+  const [refreshing, setRefreshing] = useState(false);
+  const [showFilters, setShowFilters] = useState(false);
+  const [sortBy, setSortBy] = useState('updatedAt');
+  const [sortOrder, setSortOrder] = useState('desc');
+  const [viewMode, setViewMode] = useState('card'); // 'card' or 'list'
+  const [activeTab, setActiveTab] = useState('following'); // 'following' or 'user'
   
-  // Fetch all progress items for the user
-  const fetchProgressItems = async () => {
+  // Fetch progress items based on active tab
+  const fetchProgressItems = useCallback(async () => {
     const _id = localStorage.getItem("psnUserId");
+    const endpoint = activeTab === 'following' ? '/api/v1/progress/following' : '/api/v1/progress/user';
 
     try {
-      setLoading(true);
+      setRefreshing(true);
       const response = await axios.post(
-        '/api/v1/progress/following',
+        endpoint,
         { id: _id },
         {
           headers: {
@@ -28,29 +37,58 @@ const ProgressDashboard = ({ userId }) => {
       );
   
       if (response.data.status === 'success') {
-        // Extract progress items from the new data structure
-        const items = response.data.payload || [];
-        // Transform the data to have consistent format
-        const formattedItems = items.map(item => ({
-          ...item.progress,
-          user: item.user
-        }));
+        let items = [];
+        if (activeTab === 'following') {
+          // Extract progress items from the following data structure
+          items = (response.data.payload || []).map(item => ({
+            ...item.progress,
+            user: item.user
+          }));
+        } else {
+          items = response.data.payload || [];
+        }
         
-        setProgressItems(formattedItems);
+        setProgressItems(items);
   
         // Extract unique categories
-        const uniqueCategories = [...new Set(formattedItems.map(item => item.category).filter(Boolean))];
+        const uniqueCategories = [...new Set(items.map(item => item.category).filter(Boolean))];
         setCategories(uniqueCategories);
+        setLastUpdated(new Date());
       } else {
         setError(response.data.message);
       }
     } catch (err) {
-      setError('Failed to fetch progress items');
+      setError(`Failed to fetch progress items: ${err.message}`);
       console.error(err);
     } finally {
       setLoading(false);
+      setRefreshing(false);
     }
+  }, [activeTab]);
+  
+  // Setup auto-refresh interval (every 30 seconds)
+  useEffect(() => {
+    fetchProgressItems();
+    const interval = setInterval(() => {
+      fetchProgressItems();
+    }, 30000); // Refresh every 30 seconds
+    
+    return () => clearInterval(interval);
+  }, [fetchProgressItems]);
+  
+  // Manual refresh function
+  const handleRefresh = () => {
+    fetchProgressItems();
   };
+
+  // Animation effect on component mount
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setAnimationProgress(100);
+    }, 300);
+    
+    return () => clearTimeout(timer);
+  }, []);
   
   // Calculate progress percentage
   const calculateProgress = (current, initial, target) => {
@@ -61,10 +99,33 @@ const ProgressDashboard = ({ userId }) => {
   
   // Filter progress items by category
   const getFilteredItems = () => {
-    if (selectedCategory === 'all') {
-      return progressItems;
+    let filtered = progressItems;
+    
+    // Apply category filter
+    if (selectedCategory !== 'all') {
+      filtered = filtered.filter(item => item.category === selectedCategory);
     }
-    return progressItems.filter(item => item.category === selectedCategory);
+    
+    // Apply sorting
+    filtered = [...filtered].sort((a, b) => {
+      let valueA, valueB;
+      
+      if (sortBy === 'progress') {
+        valueA = calculateProgress(a.currentValue, a.initialValue, a.targetValue);
+        valueB = calculateProgress(b.currentValue, b.initialValue, b.targetValue);
+      } else if (sortBy === 'title') {
+        valueA = a.title.toLowerCase();
+        valueB = b.title.toLowerCase();
+        return sortOrder === 'asc' ? valueA.localeCompare(valueB) : valueB.localeCompare(valueA);
+      } else {
+        valueA = new Date(a[sortBy]);
+        valueB = new Date(b[sortBy]);
+      }
+      
+      return sortOrder === 'asc' ? valueA - valueB : valueB - valueA;
+    });
+    
+    return filtered;
   };
   
   // Get statistics
@@ -83,6 +144,12 @@ const ProgressDashboard = ({ userId }) => {
       ).length
     };
     
+    // Calculate additional stats
+    stats.completionRate = stats.total > 0 ? Math.round((stats.completed / stats.total) * 100) : 0;
+    stats.averageProgress = progressItems.length > 0 ? 
+      Math.round(progressItems.reduce((sum, item) => sum + calculateProgress(item.currentValue, item.initialValue, item.targetValue), 0) / progressItems.length) : 
+      0;
+    
     return stats;
   };
   
@@ -95,346 +162,243 @@ const ProgressDashboard = ({ userId }) => {
       day: 'numeric' 
     });
   };
-  
-  // Load progress data on component mount
-  useEffect(() => {
-    fetchProgressItems();
+
+  // Format time elapsed since update
+  const formatTimeElapsed = (dateString) => {
+    const now = new Date();
+    const updated = new Date(dateString);
+    const seconds = Math.floor((now - updated) / 1000);
     
-    // Animation effect
-    const timer = setTimeout(() => {
-      setAnimationProgress(100);
-    }, 300);
-    
-    return () => clearTimeout(timer);
-  }, [userId]);
+    if (seconds < 60) return `${seconds} sec ago`;
+    const minutes = Math.floor(seconds / 60);
+    if (minutes < 60) return `${minutes} min ago`;
+    const hours = Math.floor(minutes / 60);
+    if (hours < 24) return `${hours} hr ago`;
+    const days = Math.floor(hours / 24);
+    return `${days} day${days !== 1 ? 's' : ''} ago`;
+  };
   
   const filteredItems = getFilteredItems();
   const stats = getStats();
   
   return (
-    <div style={{
-      minHeight: '100vh',
-      background: 'white',
-      color: 'white',
-      display: 'flex',
-      flexDirection: 'column',
-      alignItems: 'center',
-      padding: '2rem 1rem',
-      position: 'relative',
-      overflow: 'hidden',
-      border: '1.5px solid #063970',
-  borderRadius: '5px',
-    }}>
-      {/* Background decorative elements */}
-      <div style={{
-        position: 'absolute',
-        inset: 0,
-        overflow: 'hidden'
-      }}>
-        {/* Circular elements */}
-        {[...Array(10)].map((_, i) => (
-          <div 
-            key={i}
-            style={{
-              position: 'absolute',
-              borderRadius: '50%',
-              backgroundColor: '',
-              opacity: 0.1,
-              width: `${Math.random() * 150 + 50}px`,
-              height: `${Math.random() * 150 + 50}px`,
-              top: `${Math.random() * 100}%`,
-              left: `${Math.random() * 100}%`,
-              transform: `scale(${animationProgress / 100})`,
-              transition: 'transform 1.5s cubic-bezier(0.34, 1.56, 0.64, 1)',
-              transitionDelay: `${i * 0.05}s`
-            }}
-          />
-        ))}
-        
-        {/* Background shapes */}
-        {[...Array(5)].map((_, i) => (
-          <div 
-            key={`shape-${i}`}
-            style={{
-              position: 'absolute',
-              borderRadius: '20%',
-              border: '2px solid rgba(255, 255, 255, 0.1)',
-              width: `${Math.random() * 100 + 150}px`,
-              height: `${Math.random() * 100 + 150}px`,
-              top: `${Math.random() * 100}%`,
-              left: `${Math.random() * 100}%`,
-              transform: `rotate(${Math.random() * 360}deg) scale(${animationProgress / 100})`,
-              transition: 'transform 1.8s cubic-bezier(0.34, 1.56, 0.64, 1)',
-              transitionDelay: `${i * 0.1 + 0.2}s`
-            }}
-          />
-        ))}
-      </div>
-
+    <div className="progress-dashboard">
       {/* Header */}
-      <div style={{ 
-        display: 'flex', 
-        alignItems: 'center',
-        justifyContent: 'center',
-        marginBottom: '2rem',
+      <div className="dashboard-header" style={{
         opacity: animationProgress / 100,
         transform: `translateY(${(1 - animationProgress / 100) * 20}px)`,
-        transition: 'transform 0.8s, opacity 0.8s',
       }}>
-        <div style={{
-          backgroundColor: '#063970',
-          padding: '0.75rem',
-          borderRadius: '0.75rem',
-          marginRight: '1rem',
-          display: 'flex',
-          justifyContent: 'center',
-          alignItems: 'center'
-        }}>
-          <LineChart size={32} style={{ color: '#ffffff' }} />
+        <div className="header-left">
+          <div className="header-icon">
+            <LineChart size={32} />
+          </div>
+          <h1>PROGRESS DASHBOARD</h1>
         </div>
-        <h1 style={{
-          fontSize: '2rem',
-          fontWeight: 'bold',
-          color: '#063970',
-          margin: 0
-        }}>PROGRESS DASHBOARD</h1>
+        
+        <div className="header-actions">
+          <div className="last-updated">
+            {lastUpdated && (
+              <span>Last updated: {formatTimeElapsed(lastUpdated)}</span>
+            )}
+          </div>
+          <button 
+            className={`refresh-button ${refreshing ? 'refreshing' : ''}`}
+            onClick={handleRefresh}
+            disabled={refreshing}
+          >
+            <RefreshCw size={18} />
+            <span>{refreshing ? 'Refreshing...' : 'Refresh'}</span>
+          </button>
+        </div>
+      </div>
+
+      {/* Tabs */}
+      <div className="dashboard-tabs" style={{
+        opacity: animationProgress / 100,
+        transform: `translateY(${(1 - animationProgress / 100) * 15}px)`,
+      }}>
+        <button 
+          className={`tab-button ${activeTab === 'following' ? 'active' : ''}`}
+          onClick={() => setActiveTab('following')}
+        >
+          <User size={18} />
+          <span>Following</span>
+        </button>
+        <button 
+          className={`tab-button ${activeTab === 'user' ? 'active' : ''}`}
+          onClick={() => setActiveTab('user')}
+        >
+          <Award size={18} />
+          <span>My Progress</span>
+        </button>
       </div>
 
       {/* Main content container */}
-      <div style={{
-        maxWidth: '1000px',
-        width: '100%',
-        margin: '0 auto',
+      <div className="dashboard-content" style={{
         opacity: animationProgress / 100,
         transform: `translateY(${(1 - animationProgress / 100) * 15}px)`,
-        transition: 'transform 0.8s, opacity 0.8s',
-        transitionDelay: '0.1s',
-        color: '#063970'
       }}>
-        <div style={{
-          marginBottom: '1.5rem',
-          textAlign: 'center'
-        }}>
-          <p style={{ fontSize: '1.1rem', opacity: 0.9 }}>Track and visualize your progress across different categories</p>
-        </div>
-
         {error && (
-          <div style={{ 
-            backgroundColor: 'rgba(255, 255, 255, 0.1)', 
-            padding: '1rem', 
-            borderRadius: '0.5rem', 
-            marginBottom: '1.5rem',
-            borderLeft: '4px solid #2557cd',
-            backdropFilter: 'blur(5px)'
-          }}>
-            {error}
+          <div className="error-message">
+            <Bell size={18} />
+            <span>{error}</span>
           </div>
         )}
 
         {loading ? (
-          <div style={{
-            display: 'flex',
-            justifyContent: 'center',
-            alignItems: 'center',
-            padding: '3rem'
-          }}>
-            <Spinner animation="border" style={{ color: '#063970' }} />
+          <div className="loading-container">
+            <Spinner animation="border" className="loading-spinner" />
+            <p>Loading progress data...</p>
           </div>
         ) : progressItems.length === 0 ? (
-          <div style={{
-            textAlign: 'center',
-            padding: '3rem',
-            backgroundColor: 'rgba(255, 255, 255, 0.1)',
-            borderRadius: '1rem',
-            backdropFilter: 'blur(5px)',
-          }}>
-            <p style={{ color: '#ffff', fontSize: '1.125rem',color: 'black' }}>No progress items found. Start by creating your first progress tracker.</p>
+          <div className="empty-list">
+            <p>No progress items found. {activeTab === 'user' ? 'Start by creating your first progress tracker.' : 'Follow users to see their progress.'}</p>
           </div>
         ) : (
           <>
             {/* Statistics Cards */}
-            <div style={{
-              display: 'grid',
-              gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))',
-              gap: '1rem',
-              marginBottom: '2rem',
+            <div className="stats-section" style={{
               opacity: animationProgress / 100,
               transform: `translateY(${(1 - animationProgress / 100) * 10}px)`,
-              transition: 'transform 0.8s, opacity 0.8s',
-              transitionDelay: '0.2s'
             }}>
-              <div style={{
-                backgroundColor: 'white',
-                padding: '1.5rem',
-                borderRadius: '0.75rem',
-                textAlign: 'center',
-                backdropFilter: 'blur(5px)',
-                boxShadow: '0 4px 6px rgba(0, 0, 0, 0.1)'
-              }}>
-                <h3 style={{ margin: '0 0 0.5rem', color: '#000', fontSize: '1rem' }}>Total</h3>
-                <p style={{ fontSize: '2rem', fontWeight: 'bold', margin: '0', color: '#2557cd' }}>{stats.total}</p>
-              </div>
-
-              <div style={{
-                backgroundColor: 'white',
-                padding: '1.5rem',
-                borderRadius: '0.75rem',
-                textAlign: 'center',
-                backdropFilter: 'blur(5px)',
-                boxShadow: '0 4px 6px rgba(0, 0, 0, 0.1)'
-              }}>
-                <h3 style={{ margin: '0 0 0.5rem', color: '#000', fontSize: '1rem' }}>Completed</h3>
-                <p style={{ fontSize: '2rem', fontWeight: 'bold', margin: '0', color: '#2557cd' }}>{stats.completed}</p>
-              </div>
-
-              <div style={{
-                backgroundColor: 'white',
-                padding: '1.5rem',
-                borderRadius: '0.75rem',
-                textAlign: 'center',
-                backdropFilter: 'blur(5px)',
-                boxShadow: '0 4px 6px rgba(0, 0, 0, 0.1)'
-              }}>
-                <h3 style={{ margin: '0 0 0.5rem', color: '#000', fontSize: '1rem' }}>In Progress</h3>
-                <p style={{ fontSize: '2rem', fontWeight: 'bold', margin: '0', color: '#2557cd' }}>{stats.inProgress}</p>
-              </div>
-
-              <div style={{
-                backgroundColor: 'white',
-                padding: '1.5rem',
-                borderRadius: '0.75rem',
-                textAlign: 'center',
-                backdropFilter: 'blur(5px)',
-                boxShadow: '0 4px 6px rgba(0, 0, 0, 0.1)'
-              }}>
-                <h3 style={{ margin: '0 0 0.5rem', color: '#000', fontSize: '1rem' }}>Not Started</h3>
-                <p style={{ fontSize: '2rem', fontWeight: 'bold', margin: '0', color: '#2557cd' }}>{stats.notStarted}</p>
-              </div>
-            </div>
-            
-            {/* Category Filters Header */}
-            <div style={{
-              textAlign: 'center',
-              marginTop: '2rem',
-              marginBottom: '1.5rem',
-              opacity: animationProgress / 100,
-              transform: `translateY(${(1 - animationProgress / 100) * 10}px)`,
-              transition: 'transform 0.8s, opacity 0.8s',
-              transitionDelay: '0.2s'
-            }}>
-              <h3 style={{
-                color: '#000',
-                fontSize: '1.5rem',
-                fontWeight: 'bold',
-                position: 'relative',
-                display: 'inline-block',
-                padding: '0 1rem'
-              }}>
-                Categories
-                <div style={{
-                  position: 'absolute',
-                  bottom: '-8px',
-                  left: '50%',
-                  transform: 'translateX(-50%)',
-                  width: '60px',
-                  height: '3px',
-                  backgroundColor: '#063970',
-                  borderRadius: '2px'
-                }}></div>
-              </h3>
-            </div>
-            
-            {/* Category Filters */}
-            <div style={{
-              display: 'flex',
-              gap: '0.75rem',
-              marginBottom: '2rem',
-              flexWrap: 'wrap',
-              justifyContent: 'center',
-              opacity: animationProgress / 100,
-              transform: `translateY(${(1 - animationProgress / 100) * 5}px)`,
-              transition: 'transform 0.8s, opacity 0.8s',
-              transitionDelay: '0.3s'
-            }}>
-              <button 
-                style={{
-                  padding: '0.75rem 1.25rem',
-                  backgroundColor: selectedCategory === 'all' ? '#2557cd' : 'rgba(255, 255, 255, 0.1)',
-                  color: '#000',
-                  border: selectedCategory === 'all' ? 'none' : '1px solid rgba(255, 255, 255, 0.2)',
-                  borderRadius: '2rem',
-                  cursor: 'pointer',
-                  fontSize: '0.9rem',
-                  fontWeight: selectedCategory === 'all' ? 'bold' : 'normal',
-                  transition: 'all 0.3s ease',
-                  backdropFilter: 'blur(5px)'
-                }}
-                onClick={() => setSelectedCategory('all')}
-              >
-                All
-              </button>
+              <h2 className="section-title">
+                <TrendingUp size={20} />
+                <span>Progress Overview</span>
+              </h2>
               
-              {categories.map((category) => (
+              <div className="stats-cards">
+                <div className="stats-card">
+                  <h3>Total</h3>
+                  <p className="stats-value">{stats.total}</p>
+                </div>
+
+                <div className="stats-card">
+                  <h3>Completed</h3>
+                  <p className="stats-value success">{stats.completed}</p>
+                </div>
+
+                <div className="stats-card">
+                  <h3>In Progress</h3>
+                  <p className="stats-value warning">{stats.inProgress}</p>
+                </div>
+
+                <div className="stats-card">
+                  <h3>Not Started</h3>
+                  <p className="stats-value info">{stats.notStarted}</p>
+                </div>
+                
+                <div className="stats-card highlight">
+                  <h3>Completion Rate</h3>
+                  <p className="stats-value">{stats.completionRate}%</p>
+                </div>
+
+                <div className="stats-card highlight">
+                  <h3>Avg. Progress</h3>
+                  <p className="stats-value">{stats.averageProgress}%</p>
+                </div>
+              </div>
+            </div>
+            
+            {/* Filters Section */}
+            <div className="filters-section">
+              <div className="filters-header">
+                <h2 className="section-title">
+                  <Filter size={20} />
+                  <span>Filters & Categories</span>
+                </h2>
                 <button 
-                  key={category} 
-                  style={{
-                    padding: '0.75rem 1.25rem',
-                    backgroundColor: selectedCategory === category ? '#2557cd' : 'rgba(255, 255, 255, 0.1)',
-                    color: '#000',
-                    border: selectedCategory === category ? 'none' : '1px solid rgba(255, 255, 255, 0.2)',
-                    borderRadius: '2rem',
-                    cursor: 'pointer',
-                    fontSize: '0.9rem',
-                    fontWeight: selectedCategory === category ? 'bold' : 'normal',
-                    transition: 'all 0.3s ease',
-                    backdropFilter: 'blur(5px)'
-                  }}
-                  onClick={() => setSelectedCategory(category)}
+                  className="toggle-filters-button"
+                  onClick={() => setShowFilters(!showFilters)}
                 >
-                  {category}
+                  {showFilters ? 'Hide Filters' : 'Show Filters'}
+                  <ChevronDown size={16} className={showFilters ? 'rotated' : ''} />
                 </button>
-              ))}
+              </div>
+              
+              {showFilters && (
+                <div className="filters-controls">
+                  <div className="filter-group">
+                    <label>Category:</label>
+                    <div className="categories-list">
+                      <button 
+                        className={`category-button ${selectedCategory === 'all' ? 'active' : ''}`}
+                        onClick={() => setSelectedCategory('all')}
+                      >
+                        All
+                      </button>
+                      
+                      {categories.map((category) => (
+                        <button 
+                          key={category} 
+                          className={`category-button ${selectedCategory === category ? 'active' : ''}`}
+                          onClick={() => setSelectedCategory(category)}
+                        >
+                          {category}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                  
+                  <div className="filter-group sort-controls">
+                    <label>Sort by:</label>
+                    <select 
+                      value={sortBy} 
+                      onChange={(e) => setSortBy(e.target.value)}
+                      className="sort-select"
+                    >
+                      <option value="updatedAt">Last Updated</option>
+                      <option value="createdAt">Date Created</option>
+                      <option value="title">Title</option>
+                      <option value="progress">Progress</option>
+                    </select>
+                    
+                    <button 
+                      className="sort-direction-button"
+                      onClick={() => setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc')}
+                    >
+                      {sortOrder === 'asc' ? '↑ Ascending' : '↓ Descending'}
+                    </button>
+                  </div>
+                  
+                  <div className="filter-group view-controls">
+                    <label>View:</label>
+                    <div className="view-buttons">
+                      <button
+                        className={`view-button ${viewMode === 'card' ? 'active' : ''}`}
+                        onClick={() => setViewMode('card')}
+                      >
+                        Cards
+                      </button>
+                      <button
+                        className={`view-button ${viewMode === 'list' ? 'active' : ''}`}
+                        onClick={() => setViewMode('list')}
+                      >
+                        List
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              )}
             </div>
             
-            {/* Progress List Header */}
-            <div style={{
-              textAlign: 'center',
-              marginTop: '2rem',
-              marginBottom: '1.5rem',
-              opacity: animationProgress / 100,
-              transform: `translateY(${(1 - animationProgress / 100) * 10}px)`,
-              transition: 'transform 0.8s, opacity 0.8s',
-              transitionDelay: '0.2s'
-            }}>
-              <h3 style={{
-                color: '#000',
-                fontSize: '1.5rem',
-                fontWeight: 'bold',
-                position: 'relative',
-                display: 'inline-block',
-                padding: '0 1rem'
-              }}>
-                Progress Items
-                <div style={{
-                  position: 'absolute',
-                  bottom: '-8px',
-                  left: '50%',
-                  transform: 'translateX(-50%)',
-                  width: '60px',
-                  height: '3px',
-                  backgroundColor: '#063970',
-                  borderRadius: '2px'
-                }}></div>
-              </h3>
+            {/* Progress Items Header */}
+            <div className="progress-items-header">
+              <h2 className="section-title">
+                {selectedCategory === 'all' ? 'All Progress Items' : `${selectedCategory} Progress`}
+                <span className="items-count">({filteredItems.length} items)</span>
+              </h2>
+              {selectedCategory !== 'all' && (
+                <button 
+                  className="clear-filter-button"
+                  onClick={() => setSelectedCategory('all')}
+                >
+                  Clear Filter
+                </button>
+              )}
             </div>
             
-            {/* Progress List */}
-            <div style={{
-              display: 'grid',
-              gridTemplateColumns: 'repeat(auto-fill, minmax(250px, 1fr))',
-              gap: '1.5rem',
-              marginBottom: '3rem'
-            }}>
+            {/* Progress Items List */}
+            <div className={`progress-items ${viewMode === 'list' ? 'list-view' : 'card-view'}`}>
               {filteredItems.map((progress, index) => {
                 const progressPercent = calculateProgress(
                   progress.currentValue,
@@ -443,133 +407,96 @@ const ProgressDashboard = ({ userId }) => {
                 );
                 
                 const progressColor = 
-                  progressPercent >= 100 ? '#2557cd' : 
-                  progressPercent > 50 ? '#2557cd' : 
-                  progressPercent > 25 ? '#2557cd' : '#2557cd';
+                  progressPercent >= 100 ? 'success' : 
+                  progressPercent > 50 ? 'good' : 
+                  progressPercent > 25 ? 'warning' : 'info';
                 
                 return (
                   <div 
-                    key={progress.id} 
+                    key={progress.id || index} 
+                    className={`progress-item ${progressColor}`}
                     style={{
-                      backgroundColor: 'white',
-                      borderRadius: '1rem',
-                      padding: '1.5rem',
-                      backdropFilter: 'blur(5px)',
-                      boxShadow: '0 4px 6px rgba(0, 0, 0, 0.1)',
-                      border: '1px solid rgba(255, 255, 255, 0.1)',
                       transform: `translateY(${(1 - animationProgress / 100) * 10}px)`,
                       opacity: animationProgress / 100,
-                      transition: 'transform 0.8s, opacity 0.8s',
                       transitionDelay: `${0.3 + index * 0.05}s`
                     }}
                   >
-                    {/* User info - new addition */}
+                    {/* User info */}
                     {progress.user && (
-                      <div style={{
-                        display: 'flex',
-                        alignItems: 'center',
-                        marginBottom: '1rem',
-                        padding: '0.5rem',
-                        backgroundColor: 'white',
-                        borderRadius: '0.5rem'
-                      }}>
-                        <div style={{
-                          width: '2rem',
-                          height: '2rem',
-                          borderRadius: '50%',
-                          backgroundColor: '#2557cd',
-                          display: 'flex',
-                          justifyContent: 'center',
-                          alignItems: 'center',
-                          marginRight: '0.75rem'
-                        }}>
-                          <User size={18} color="#000" />
+                      <div className="progress-user">
+                        <div className="user-avatar">
+                          <User size={18} />
                         </div>
-                        <div>
-                          <div style={{
-                            fontWeight: 'bold',
-                            fontSize: '0.9rem'
-                          }}>
+                        <div className="user-info">
+                          <div className="user-name">
                             {progress.user.firstName} {progress.user.lastName}
                           </div>
-                          <div style={{
-                            fontSize: '0.8rem',
-                            opacity: 0.7
-                          }}>
+                          <div className="user-email">
                             {progress.user.email}
                           </div>
                         </div>
                       </div>
                     )}
                     
-                    <h3 style={{ 
-                      margin: '0 0 0.75rem', 
-                      fontSize: '1.25rem',
-                      color: '#000',
-                      fontWeight: 'bold'
-                    }}>
-                      {progress.title}
-                    </h3>
+                    <div className="progress-header">
+                      <h3 className="progress-title">
+                        {progress.title}
+                      </h3>
+                      
+                      {progress.category && (
+                        <span className="progress-category">
+                          {progress.category}
+                        </span>
+                      )}
+                    </div>
                     
-                    {progress.category && (
-                      <span style={{
-                        display: 'inline-block',
-                        padding: '0.25rem 0.75rem',
-                        backgroundColor: 'white',
-                        color: '#000',
-                        borderRadius: '1rem',
-                        fontSize: '0.8rem',
-                        marginBottom: '1rem'
-                      }}>
-                        {progress.category}
-                      </span>
+                    {progress.description && (
+                      <p className="progress-description">
+                        {progress.description}
+                      </p>
                     )}
                     
-                    <div style={{
-                      height: '0.5rem',
-                      backgroundColor: 'rgba(255, 255, 255, 0.2)',
-                      borderRadius: '0.25rem',
-                      overflow: 'hidden',
-                      margin: '1rem 0',
-                      position: 'relative'
-                    }}>
-                      <div style={{
-                        width: `${progressPercent}%`,
-                        height: '100%',
-                        backgroundColor: progressColor,
-                        borderRadius: '0.25rem',
-                        transition: 'width 1s ease-in-out',
-                      }} />
+                    <div className="progress-bar-container">
+                      <div 
+                        className={`progress-bar ${progressColor}`}
+                        style={{ width: `${progressPercent}%` }}
+                      >
+                        {progressPercent >= 15 && (
+                          <span className="progress-percentage">{Math.round(progressPercent)}%</span>
+                        )}
+                      </div>
+                      {progressPercent < 15 && (
+                        <span className="progress-percentage-outside">{Math.round(progressPercent)}%</span>
+                      )}
                     </div>
                     
-                    <div style={{ 
-                      display: 'flex', 
-                      justifyContent: 'space-between', 
-                      fontSize: '0.9rem',
-                      color: 'rgba(0, 0, 0, 0.8)'
-                    }}>
-                      <div>{progress.currentValue} {progress.unit}</div>
-                      <div>{progress.targetValue} {progress.unit}</div>
-                    </div>
-                    
-                    <div style={{ 
-                      display: 'flex', 
-                      justifyContent: 'space-between',
-                      alignItems: 'center',
-                      marginTop: '1.5rem',
-                      fontSize: '0.8rem',
-                      color: 'rgba(0, 0, 0, 0.6)'
-                    }}>
-                      <div>Updated: {formatDate(progress.updatedAt)}</div>
-                      <div style={{
-                        backgroundColor: progressColor,
-                        color: '#000',
-                        padding: '0.25rem 0.5rem',
-                        borderRadius: '0.25rem',
-                        fontWeight: 'bold',
-                        fontSize: '0.8rem'
-                      }}>
-                        {Math.round(progressPercent)}%
+                    <div className="progress-details">
+                      <div className="progress-values">
+                        <div className="progress-value">
+                          <span className="label">Initial:</span>
+                          <span className="value">{progress.initialValue} {progress.unit}</span>
+                        </div>
+                        <div className="progress-value current">
+                          <span className="label">Current:</span>
+                          <span className="value">{progress.currentValue} {progress.unit}</span>
+                        </div>
+                        <div className="progress-value">
+                          <span className="label">Target:</span>
+                          <span className="value">{progress.targetValue} {progress.unit}</span>
+                        </div>
+                      </div>
+                      
+                      <div className="progress-meta">
+                        <div className="progress-date">
+                          <span className="label">Updated:</span>
+                          <span className="value">{formatTimeElapsed(progress.updatedAt)}</span>
+                        </div>
+                        
+                        {viewMode === 'list' && (
+                          <div className="progress-percentage-badge">
+                            {Math.round(progressPercent)}%
+                          </div>
+                        )}
                       </div>
                     </div>
                   </div>
@@ -578,45 +505,6 @@ const ProgressDashboard = ({ userId }) => {
             </div>
           </>
         )}
-      </div>
-      
-      {/* Decorative elements */}
-      <div style={{
-        position: 'fixed',
-        bottom: '0',
-        left: '0',
-        width: '100%',
-        height: '150px',
-        background: 'linear-gradient(to top, rgba(180, 83, 9, 0.1), transparent)',
-        zIndex: '-1'
-      }}></div>
-      
-      {/* Floating decorative elements */}
-      <div style={{
-          position: 'fixed',
-          inset: 0,
-          overflow: 'hidden',
-          pointerEvents: 'none',
-          zIndex: '-1'
-        }}>
-          {[...Array(8)].map((_, i) => (
-            <div 
-              key={i}
-              style={{
-                position: 'absolute',
-                borderRadius: '50%',
-                backgroundColor: '#2557cd',
-                opacity: 0.05,
-                width: `${Math.random() * 200 + 50}px`,
-                height: `${Math.random() * 200 + 50}px`,
-                top: `${Math.random() * 100}%`,
-                left: `${Math.random() * 100}%`,
-                transform: `scale(${animationProgress / 100})`,
-                transition: 'transform 1.5s cubic-bezier(0.34, 1.56, 0.64, 1)',
-                transitionDelay: `${i * 0.05}s`
-              }}
-            />
-          ))}
       </div>
     </div>
   );
