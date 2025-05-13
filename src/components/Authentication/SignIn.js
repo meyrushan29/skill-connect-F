@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Formik } from "formik";
 import * as yup from "yup";
 import Form from "react-bootstrap/Form";
@@ -9,25 +9,23 @@ import GoogleAuth from "./googleAuth";
 import { RiLoginBoxLine } from "react-icons/ri";
 import axios from "axios";
 import { Link, useNavigate } from "react-router-dom";
-import google from "../assets/images/google.png";
 import { Utensils } from 'lucide-react';
 import Snackbar from "@mui/material/Snackbar";
 import Alert from "@mui/material/Alert";
 
 function SignIn() {
-  const Google_ = () => {
-    window.open("http://localhost:5000/auth/google", "_self")
-  }
-  
   const [resData, setResData] = useState(null);
   const [snackbarOpen, setSnackbarOpen] = useState(false);
   const [snackbarMessage, setSnackbarMessage] = useState("");
   const [animationProgress, setAnimationProgress] = useState(0);
+  const [loading, setLoading] = useState(false);
+  
+  let navigate = useNavigate();
 
-  React.useEffect(() => {
+  useEffect(() => {
     const timer = setTimeout(() => {
       setAnimationProgress(100);
-    }, 500);
+    }, 300);
     
     return () => clearTimeout(timer);
   }, []);
@@ -36,351 +34,337 @@ function SignIn() {
     setSnackbarOpen(false);
   };
 
+  const Google_ = () => {
+    window.open("http://localhost:5000/auth/google", "_self");
+  };
+
   async function postSignInInfoWithGoogle(inputData) {
-    let datas = {
-      email: inputData.user.email,
-      password: "PAF2023@@",
-    };
-    const response = await axios({
-      method: "post",
-      url: "/api/v1/users/signin",
-      data: datas
-    });
+    setLoading(true);
+    try {
+      let datas = {
+        email: inputData.user.email,
+        password: "PAF2023@@",
+      };
+      const response = await axios({
+        method: "post",
+        url: "/api/v1/users/signin",
+        data: datas
+      });
 
-    if (response.data !== null && response.data.status === "fail") {
-      setSnackbarMessage(response.data.message);
+      if (response.data !== null && response.data.status === "fail") {
+        setSnackbarMessage(response.data.message);
+        setSnackbarOpen(true);
+      }
+
+      if (response.data !== null && response.data.status === "success") {
+        setResData(response.data);
+
+        localStorage.setItem("psnUserId", response.data.payload.user.id);
+        localStorage.setItem("psnUserFirstName", response.data.payload.user.firstName);
+        localStorage.setItem("psnUserLastName", response.data.payload.user.lastName);
+        localStorage.setItem("psnUserEmail", response.data.payload.user.email);
+        localStorage.setItem("psnBio", response.data.payload.user.bio);
+        localStorage.setItem("psnToken", response.data.payload.token);
+        navigate("/newsfeed");
+      }
+    } catch (error) {
+      setSnackbarMessage("Authentication failed. Please try again.");
       setSnackbarOpen(true);
-    }
-
-    if (response.data !== null && response.data.status === "success") {
-      setResData(response.data);
-
-      localStorage.setItem("psnUserId", response.data.payload.user.id);
-      localStorage.setItem("psnUserFirstName", response.data.payload.user.firstName);
-      localStorage.setItem("psnUserLastName", response.data.payload.user.lastName);
-      localStorage.setItem("psnUserEmail", response.data.payload.user.email);
-      localStorage.setItem("psnBio", response.data.payload.user.bio);
-      localStorage.setItem("psnToken", response.data.payload.token);
-      navigate("/newsfeed");
+    } finally {
+      setLoading(false);
     }
   }
   
   const handleAuth = (data) => {
-    postSignInInfoWithGoogle(data)
-  }
+    postSignInInfoWithGoogle(data);
+  };
   
-  let navigate = useNavigate();
-
   const schema = yup.object().shape({
-    email: yup.string().email().required(),
-    password: yup.string().required(),
+    email: yup.string().email("Please enter a valid email").required("Email is required"),
+    password: yup.string().required("Password is required"),
   });
 
   async function postSignInInfo(inputData) {
-    const response = await axios({
-      method: "post",
-      url: "/api/v1/users/signin",
-      data: {
-        email: inputData.email,
-        password: inputData.password,
-      },
-    });
+    setLoading(true);
+    try {
+      const response = await axios({
+        method: "post",
+        url: "/api/v1/users/signin",
+        data: {
+          email: inputData.email,
+          password: inputData.password,
+        },
+      });
 
-    if (response.data !== null && response.data.status === "fail") {
-      setSnackbarMessage("Authentication failed");
+      if (response.data !== null && response.data.status === "fail") {
+        setSnackbarMessage(response.data.message || "Authentication failed");
+        setSnackbarOpen(true);
+      }
+
+      if (response.data !== null && response.data.status === "success") {
+        setResData(response.data);
+        localStorage.setItem("psnUserId", response.data.payload.user.id);
+        localStorage.setItem("psnUserFirstName", response.data.payload.user.firstName);
+        localStorage.setItem("psnBio", response.data.payload.user.bio);
+        localStorage.setItem("psnUserLastName", response.data.payload.user.lastName);
+        localStorage.setItem("psnUserEmail", response.data.payload.user.email);
+        localStorage.setItem("psnToken", response.data.payload.token);
+        navigate("/newsfeed");
+      }
+    } catch (error) {
+      setSnackbarMessage("Authentication failed. Please try again.");
       setSnackbarOpen(true);
-    }
-
-    if (response.data !== null && response.data.status === "success") {
-      setResData(response.data);
-      localStorage.setItem("psnUserId", response.data.payload.user.id);
-      localStorage.setItem("psnUserFirstName", response.data.payload.user.firstName);
-      localStorage.setItem("psnBio", response.data.payload.user.bio);
-      localStorage.setItem("psnUserLastName", response.data.payload.user.lastName);
-      localStorage.setItem("psnUserEmail", response.data.payload.user.email);
-      localStorage.setItem("psnToken", response.data.payload.token);
-      navigate("/newsfeed");
+    } finally {
+      setLoading(false);
     }
   }
 
-  return (
-    <>
-      <div style={{
-        minHeight: '100vh',
-        background: '#F2F4F7',
-        display: 'flex',
-        flexDirection: 'column',
-        alignItems: 'center',
-        justifyContent: 'center',
-        padding: '2rem',
-        position: 'relative',
-        overflow: 'hidden'
-      }}>
-        {/* Animated background elements */}
-        <div style={{
-          position: 'absolute',
-          inset: 0,
-          overflow: 'hidden',
-        }}>
-          {/* Animated food/ingredient elements */}
-          {[...Array(15)].map((_, i) => (
-            <div 
-              key={i}
-              style={{
-                position: 'absolute',
-                borderRadius: '50%',
-                backgroundColor: 'white',
-                opacity: 0.08,
-                width: `${Math.random() * 300 + 50}px`,
-                height: `${Math.random() * 300 + 50}px`,
-                top: `${Math.random() * 100}%`,
-                left: `${Math.random() * 100}%`,
-                transform: `scale(${animationProgress / 100})`,
-                transition: 'transform 1.5s cubic-bezier(0.34, 1.56, 0.64, 1)',
-                transitionDelay: `${i * 0.05}s`
-              }}
-            />
-          ))}
-          
-          {/* Kitchen utensil shapes */}
-          {[...Array(5)].map((_, i) => (
-            <div 
-              key={`utensil-${i}`}
-              style={{
-                position: 'absolute',
-                borderRadius: '20%',
-                border: '2px solid rgba(255, 255, 255, 0.1)',
-                width: `${Math.random() * 100 + 150}px`,
-                height: `${Math.random() * 100 + 150}px`,
-                top: `${Math.random() * 100}%`,
-                left: `${Math.random() * 100}%`,
-                transform: `rotate(${Math.random() * 360}deg) scale(${animationProgress / 100})`,
-                transition: 'transform 1.8s cubic-bezier(0.34, 1.56, 0.64, 1)',
-                transitionDelay: `${i * 0.1 + 0.2}s`
-              }}
-            />
-          ))}
-        </div>
+  // Animated background elements for decoration
+  const renderDecorations = () => (
+    <div className="absolute inset-0 overflow-hidden">
+      {/* Animated circles */}
+      {[...Array(12)].map((_, i) => (
+        <div 
+          key={i}
+          className="absolute rounded-full"
+          style={{
+            backgroundColor: i % 2 === 0 ? 'rgba(118, 181, 197, 0.08)' : 'rgba(6, 57, 112, 0.06)',
+            width: `${Math.random() * 300 + 50}px`,
+            height: `${Math.random() * 300 + 50}px`,
+            top: `${Math.random() * 100}%`,
+            left: `${Math.random() * 100}%`,
+            transform: `scale(${animationProgress / 100})`,
+            transition: 'transform 1.5s cubic-bezier(0.34, 1.56, 0.64, 1)',
+            transitionDelay: `${i * 0.05}s`
+          }}
+        />
+      ))}
+      
+      {/* Kitchen utensil shapes */}
+      {[...Array(5)].map((_, i) => (
+        <div 
+          key={`utensil-${i}`}
+          style={{
+            position: 'absolute',
+            borderRadius: '20%',
+            border: '2px solid rgba(6, 57, 112, 0.05)',
+            width: `${Math.random() * 100 + 150}px`,
+            height: `${Math.random() * 100 + 150}px`,
+            top: `${Math.random() * 100}%`,
+            left: `${Math.random() * 100}%`,
+            transform: `rotate(${Math.random() * 360}deg) scale(${animationProgress / 100})`,
+            transition: 'transform 1.8s cubic-bezier(0.34, 1.56, 0.64, 1)',
+            transitionDelay: `${i * 0.1 + 0.2}s`
+          }}
+        />
+      ))}
+    </div>
+  );
 
-        <div style={{
-          background: 'rgba(255, 255, 255, 0.9)',
-          borderRadius: '1rem',
-          boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)',
-          width: '100%',
-          maxWidth: '900px',
-          display: 'flex',
-          flexDirection: 'row',
-          overflow: 'hidden',
+  return (
+    <div className="min-h-screen bg-slate-50 flex flex-col items-center justify-center p-4 sm:p-6 md:p-8 relative overflow-hidden">
+      {/* Background decorations */}
+      {renderDecorations()}
+
+      {/* Main card */}
+      <div 
+        className="bg-white rounded-2xl shadow-xl w-full max-w-5xl flex flex-col md:flex-row overflow-hidden"
+        style={{
           opacity: animationProgress / 100,
           transform: `translateY(${(1 - animationProgress / 100) * 20}px)`,
           transition: 'transform 1s, opacity 1s',
           transitionDelay: '0.2s'
-        }}>
-          <div style={{
-            flex: 1,
-            padding: '2.5rem',
-            display: 'flex',
-            flexDirection: 'column',
-            justifyContent: 'center',
-            gap: '1.5rem'
-          }}>
-
-            <div style={{
-              display: 'flex',
-              flexDirection: 'column',
-              gap: '1rem'
-            }}>
-              {/* Google Auth button */}
-              <div>
-                <GoogleAuth handleAuth={handleAuth} />
-              </div>
-            </div>
-
-            <div style={{
-              display: 'flex',
-              alignItems: 'center',
-              margin: '1rem 0'
-            }}>
-              <div style={{ flex: 1, height: '1px', backgroundColor: '#e5e7eb' }} />
-              <div style={{ margin: '0 1rem', color: '#19304f', fontSize: '0.875rem' }}>OR</div>
-              <div style={{ flex: 1, height: '1px', backgroundColor: '#e5e7eb' }} />
-            </div>
-
-            <Formik
-              validationSchema={schema}
-              initialValues={{
-                email: "",
-                password: "",
-              }}
-              onSubmit={(values, { setSubmitting }) => {
-                postSignInInfo(values);
-                setSubmitting(false);
-              }}
-            >
-              {({
-                handleSubmit,
-                handleChange,
-                handleBlur,
-                values,
-                touched,
-                isInValid,
-                errors,
-              }) => (
-                <Form
-                  noValidate
-                  onSubmit={handleSubmit}
-                  style={{
-                    display: 'flex',
-                    flexDirection: 'column',
-                    gap: '1rem'
-                  }}
-                >
-                  <Row>
-                    <Form.Group as={Col} md="12" controlId="signInEmail">
-                      <Form.Label style={{ color: "#19304f", fontWeight: '500', marginBottom: '0rem' }}>Email</Form.Label>
-                      <Form.Control
-                        type="email"
-                        name="email"
-                        value={values.email}
-                        onChange={handleChange}
-                        isInvalid={touched.email && errors.email}
-                        placeholder="Enter your email"
-                        style={{
-                          padding: '0.5rem',
-                          borderRadius: '0.5rem',
-                          border: '1px solid #d1d5db',
-                          width: '100%'
-                        }}
-                      />
-                      <Form.Control.Feedback type="invalid">
-                        Please enter a valid email
-                      </Form.Control.Feedback>
-                    </Form.Group>
-                  </Row>
-                  <Row>
-                    <Form.Group as={Col} md="12" controlId="signInPassword">
-                      <Form.Label style={{ color: "#19304f", fontWeight: '500' }}>Password</Form.Label>
-                      <Form.Control
-                        type="password"
-                        name="password"
-                        value={values.password}
-                        onChange={handleChange}
-                        isInvalid={touched.password && errors.password}
-                        placeholder="Enter your password"
-                        style={{
-                          padding: '0.5rem',
-                          borderRadius: '0.5rem',
-                          border: '1px solid #d1d5db',
-                          width: '100%'
-                        }}
-                      />
-                      <Form.Control.Feedback type="invalid">
-                        Please enter your password
-                      </Form.Control.Feedback>
-                    </Form.Group>
-                  </Row>
-                  <Button 
-                    type="submit" 
-                    style={{ 
-                      backgroundColor: '#063970',
-                      border: 'none',
-                      borderRadius: '0.5rem',
-                      padding: '0.5rem',
-                      fontWeight: 'bold',
-                      color: 'white',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      gap: '0.5rem',
-                      cursor: 'pointer',
-                      transition: 'all 0.2s',
-                      marginTop: '0.5rem'
-                    }}
-                  >
-                    Sign In <RiLoginBoxLine />
-                  </Button>
-                  
-                  <div style={{ 
-                    textAlign: "center", 
-                    marginTop: '1rem',
-                    display: 'flex',
-                    justifyContent: 'center'
-                  }}>
-                    <Link to='/signup' style={{ textDecoration: 'none' }}>
-                      <Button style={{
-                        background: '#76B5C5',
-                        border: 'none',
-                        borderRadius: '0.5rem',
-                        padding: '0.5rem 1.5rem',
-                        fontWeight: 'bold'
-                      }}>
-                        Create a New Account
-                      </Button>
-                    </Link>
-                  </div>
-                </Form>
-              )}
-            </Formik>
+        }}
+      >
+        {/* Left side - Sign in form */}
+        <div className="flex-1 p-6 md:p-8 lg:p-10 flex flex-col justify-center gap-6">
+          <div className="text-center mb-2">
+            <h1 className="text-2xl font-bold text-blue-900">Sign In to Skill Connect</h1>
+            <p className="text-slate-500 mt-1">Connect with professionals and showcase your skills</p>
           </div>
 
-          {/* Right side decorative panel */}
-          <div style={{
-            flex: 1,
-            background: '',
-            padding: '2rem',
-            display: 'flex',
-            flexDirection: 'column',
-            justifyContent: 'center',
-            alignItems: 'center',
-            color: '#063970',
-            position: 'relative',
-            overflow: 'hidden',
-            borderLeft: '1px solid #e5e7eb'
-          }}>
-            {/* Decorative circles */}
-            {[...Array(5)].map((_, i) => (
+          {/* Google Auth */}
+          <div className="w-full">
+            <GoogleAuth handleAuth={handleAuth} />
+          </div>
+
+          {/* Divider */}
+          <div className="flex items-center my-4">
+            <div className="flex-1 h-px bg-slate-200"></div>
+            <div className="mx-4 text-sm text-slate-500 font-medium">OR CONTINUE WITH EMAIL</div>
+            <div className="flex-1 h-px bg-slate-200"></div>
+          </div>
+
+          {/* Form */}
+          <Formik
+            validationSchema={schema}
+            initialValues={{
+              email: "",
+              password: "",
+            }}
+            onSubmit={(values, { setSubmitting }) => {
+              postSignInInfo(values);
+              setSubmitting(false);
+            }}
+          >
+            {({
+              handleSubmit,
+              handleChange,
+              handleBlur,
+              values,
+              touched,
+              errors,
+            }) => (
+              <Form
+                noValidate
+                onSubmit={handleSubmit}
+                className="flex flex-col gap-4"
+              >
+                <Form.Group as={Col} controlId="signInEmail" className="mb-1">
+                  <Form.Label className="text-blue-900 font-medium text-sm mb-1 block">Email Address</Form.Label>
+                  <Form.Control
+                    type="email"
+                    name="email"
+                    value={values.email}
+                    onChange={handleChange}
+                    onBlur={handleBlur}
+                    isInvalid={touched.email && errors.email}
+                    placeholder="you@example.com"
+                    className="w-full py-2 px-3 rounded-lg border border-slate-300 focus:border-blue-500 focus:ring focus:ring-blue-200 transition"
+                  />
+                  <Form.Control.Feedback type="invalid" className="text-xs mt-1">
+                    {errors.email}
+                  </Form.Control.Feedback>
+                </Form.Group>
+
+                <Form.Group as={Col} controlId="signInPassword" className="mb-1">
+                  <div className="flex justify-between items-center mb-1">
+                    <Form.Label className="text-blue-900 font-medium text-sm block">Password</Form.Label>
+                    <Link to="/forgot-password" className="text-xs text-blue-600 hover:text-blue-800 font-medium">
+                      Forgot password?
+                    </Link>
+                  </div>
+                  <Form.Control
+                    type="password"
+                    name="password"
+                    value={values.password}
+                    onChange={handleChange}
+                    onBlur={handleBlur}
+                    isInvalid={touched.password && errors.password}
+                    placeholder="••••••••"
+                    className="w-full py-2 px-3 rounded-lg border border-slate-300 focus:border-blue-500 focus:ring focus:ring-blue-200 transition"
+                  />
+                  <Form.Control.Feedback type="invalid" className="text-xs mt-1">
+                    {errors.password}
+                  </Form.Control.Feedback>
+                </Form.Group>
+
+                <Button 
+                  type="submit" 
+                  disabled={loading}
+                  className="mt-2 bg-blue-900 hover:bg-blue-800 border-0 rounded-lg py-3 font-bold text-white flex items-center justify-center gap-2 transition-all"
+                >
+                  {loading ? (
+                    <>
+                      <span className="animate-spin inline-block w-4 h-4 border-2 border-white border-t-transparent rounded-full mr-2"></span>
+                      Signing in...
+                    </>
+                  ) : (
+                    <>
+                      Sign In <RiLoginBoxLine />
+                    </>
+                  )}
+                </Button>
+                
+                <div className="text-center mt-4">
+                  <p className="text-slate-600 mb-3">Don't have an account?</p>
+                  <Link to='/signup' className="text-decoration-none">
+                    <Button 
+                      className="bg-blue-50 hover:bg-blue-100 text-blue-700 border border-blue-200 rounded-lg py-2 px-5 font-medium transition-all w-full"
+                    >
+                      Create a New Account
+                    </Button>
+                  </Link>
+                </div>
+              </Form>
+            )}
+          </Formik>
+        </div>
+
+        {/* Right side - Branding panel */}
+        <div className="hidden md:flex flex-1 bg-gradient-to-br from-blue-50 to-blue-100 p-8 flex-col justify-center items-center text-blue-900 relative overflow-hidden border-l border-slate-100">
+          {/* Decorative circles */}
+          <div className="absolute inset-0 overflow-hidden">
+            <div className="absolute w-96 h-96 rounded-full bg-blue-900/5 -top-20 -right-20"></div>
+            <div className="absolute w-96 h-96 rounded-full bg-cyan-500/5 -bottom-20 -left-20"></div>
+            
+            {/* Additional decorative elements */}
+            {[...Array(3)].map((_, i) => (
               <div 
                 key={i}
+                className="absolute rounded-full bg-blue-900/[0.03]"
                 style={{
-                  position: 'absolute',
-                  borderRadius: '50%',
-                  backgroundColor: 'rgba(255, 255, 255, 0.1)',
-                  width: `${(i + 1) * 100}px`,
-                  height: `${(i + 1) * 100}px`,
+                  width: `${(i + 2) * 100}px`,
+                  height: `${(i + 2) * 100}px`,
                   top: '50%',
                   left: '50%',
                   transform: 'translate(-50%, -50%)',
-                  zIndex: 0
                 }}
               />
             ))}
+
+            {/* Animated icons */}
+            <div className="absolute top-1/4 left-1/4 transform -translate-x-1/2 -translate-y-1/2">
+              <Utensils size={32} className="text-blue-900/20" />
+            </div>
+            <div className="absolute bottom-1/4 right-1/4 transform translate-x-1/2 translate-y-1/2">
+              <Utensils size={24} className="text-blue-900/15" />
+            </div>
+          </div>
+          
+          {/* Content */}
+          <div className="relative z-10 text-center max-w-md">
+            <div className="mb-3 inline-flex items-center justify-center w-16 h-16 rounded-full bg-blue-100 text-blue-900">
+              <Utensils size={28} />
+            </div>
+            <h2 className="text-3xl md:text-4xl font-bold mb-4">Welcome to Skill Connect</h2>
+            <p className="text-blue-700 mb-6 text-lg">Connect with professionals, showcase your skills, and explore opportunities.</p>
             
-            <div style={{
-              position: 'relative',
-              zIndex: 1,
-              textAlign: 'center'
-            }}>
-              <h2 style={{
-                fontSize: '2.5rem',
-                fontWeight: 'bold',
-                marginBottom: '1rem'
-              }}>Welcome to Skill Connect</h2>
+            <div className="grid grid-cols-3 gap-3 mt-8">
+              {["Discovery", "Networking", "Growth"].map((item, i) => (
+                <div key={i} className="bg-white/60 p-3 rounded-lg text-center shadow-sm">
+                  <p className="font-semibold text-blue-900">{item}</p>
+                </div>
+              ))}
             </div>
           </div>
         </div>
       </div>
+
+      {/* Footer */}
+      <div className="mt-6 text-center text-slate-500 text-sm">
+        © {new Date().getFullYear()} Skill Connect. All rights reserved.
+      </div>
       
+      {/* Snackbar for notifications */}
       <Snackbar
         open={snackbarOpen}
-        autoHideDuration={3000}
+        autoHideDuration={5000}
         onClose={handleSnackbarClose}
         anchorOrigin={{ vertical: "top", horizontal: "right" }}
       >
-        <Alert onClose={handleSnackbarClose} severity="error" sx={{ width: "100%" }}>
+        <Alert 
+          onClose={handleSnackbarClose} 
+          severity="error" 
+          sx={{ 
+            width: "100%",
+            boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1)'
+          }}
+        >
           {snackbarMessage}
         </Alert>
       </Snackbar>
-    </>
+    </div>
   );
 }
 
