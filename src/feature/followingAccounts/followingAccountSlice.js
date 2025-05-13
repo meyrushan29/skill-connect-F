@@ -6,6 +6,7 @@ const initialState = {
   followerAccounts: null,
 };
 
+//get api comment
 export const getFollowingAccounts = createAsyncThunk(
   "/api/v1/users/getfollowing",
   async (thunkAPI) => {
