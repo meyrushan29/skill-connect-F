@@ -1,17 +1,21 @@
 import React, { useEffect, useState } from "react";
 import { Carousel } from "react-bootstrap";
-import { FileText } from 'lucide-react';
+import { FileText, ChevronLeft, ChevronRight, Loader } from 'lucide-react';
 import './pdfViewer.css';
 
 function MultiPDFViewer(props) {
     const [pdfItems, setPdfItems] = useState([]);
-    const [loading, setLoading] = useState(false);
+    const [loading, setLoading] = useState(true);
+    const [currentIndex, setCurrentIndex] = useState(0);
+    const [error, setError] = useState(null);
     
     useEffect(() => {
         if (props && props.pdfs && props.pdfs.length > 0) {
             setLoading(true);
             setPdfItems(props.pdfs);
-            setLoading(false);
+            setTimeout(() => {
+                setLoading(false);
+            }, 800); // Give time for PDF to load
         }
     }, [props]);
     
@@ -24,19 +28,21 @@ function MultiPDFViewer(props) {
         return false;
     };
     
+    const handleSlideChange = (selectedIndex) => {
+        setCurrentIndex(selectedIndex);
+    };
+    
     return (
-        <div style={{ 
-            background: 'rgba(255, 255, 255, 0.95)', 
-            borderRadius: '16px',
-            overflow: 'hidden'
-        }}>
-            {pdfItems && pdfItems.length > 0 && (
-                <div style={{ maxWidth: "100%", width: "100%" }}>
+        <div className="multi-pdf-viewer">
+            {pdfItems && pdfItems.length > 0 ? (
+                <div className="pdf-carousel-container">
                     <Carousel 
                         interval={null}
                         indicators={pdfItems.length > 1}
-                        prevIcon={<span aria-hidden="true" className="carousel-control-prev-icon" />}
-                        nextIcon={<span aria-hidden="true" className="carousel-control-next-icon" />}
+                        prevIcon={<ChevronLeft size={24} className="carousel-arrow" />}
+                        nextIcon={<ChevronRight size={24} className="carousel-arrow" />}
+                        activeIndex={currentIndex}
+                        onSelect={handleSlideChange}
                     >
                         {pdfItems.map((pdfItem, index) => (
                             <Carousel.Item key={index}>
@@ -44,7 +50,8 @@ function MultiPDFViewer(props) {
                                     <div className="pdf-container">
                                         {loading && (
                                             <div className="pdf-loading">
-                                                Loading PDF...
+                                                <Loader size={32} className="loading-spinner" />
+                                                <span>Loading PDF...</span>
                                             </div>
                                         )}
                                         <iframe
@@ -52,17 +59,36 @@ function MultiPDFViewer(props) {
                                             src={pdfItem}
                                             title={`pdf-document-${index}`}
                                             onLoad={() => setLoading(false)}
+                                            onError={() => {
+                                                setLoading(false);
+                                                setError(`Failed to load PDF document ${index + 1}`);
+                                            }}
                                         />
                                     </div>
                                 ) : (
                                     <div className="invalid-pdf">
-                                        <FileText size={24} style={{ marginRight: '8px' }} />
-                                        Invalid PDF format
+                                        <FileText size={32} />
+                                        <p>Invalid PDF format</p>
                                     </div>
                                 )}
                             </Carousel.Item>
                         ))}
                     </Carousel>
+                    
+                    {pdfItems.length > 1 && (
+                        <div className="pdf-navigator">
+                            <span>Page {currentIndex + 1} of {pdfItems.length}</span>
+                        </div>
+                    )}
+                </div>
+            ) : error ? (
+                <div className="pdf-error">
+                    <p>{error}</p>
+                </div>
+            ) : (
+                <div className="pdf-loading">
+                    <Loader size={32} className="loading-spinner" />
+                    <span>Loading PDF viewer...</span>
                 </div>
             )}
         </div>

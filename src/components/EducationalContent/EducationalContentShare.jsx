@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import axios from 'axios';
+import { FileText, Upload, X, AlertTriangle, CheckCircle } from 'lucide-react';
 import MultiPDFUpload from './MultiPDFUpload';
 import './EducationalContent.css';
 
@@ -16,7 +17,7 @@ const EducationalContentShare = ({ userId }) => {
 
   const handlePDFUpload = (processedPDFs) => {
     setPdfFiles(processedPDFs);
-    // Set the first PDF's base64 as content (you can modify this logic as needed)
+    // Set the first PDF's base64 as content
     if (processedPDFs.length > 0) {
       setContent(processedPDFs[0].base64);
     }
@@ -24,11 +25,28 @@ const EducationalContentShare = ({ userId }) => {
 
   const handleFormSubmit = async (e) => {
     e.preventDefault();
-    // The form's default submit will be prevented, and we'll use the onClick handler instead
-  };
-
-  const handleButtonClick = async () => {
-    if (uploading) return; // Prevent multiple clicks while uploading
+    if (uploading) return;
+    
+    // Form validation
+    if (!title.trim()) {
+      setError("Please enter a title");
+      return;
+    }
+    
+    if (!description.trim()) {
+      setError("Please enter a description");
+      return;
+    }
+    
+    if (contentType === 'TEXT' && !content.trim()) {
+      setError("Please enter content text");
+      return;
+    }
+    
+    if (contentType === 'PDF' && pdfFiles.length === 0) {
+      setError("Please upload a PDF file");
+      return;
+    }
     
     setUploading(true);
     setMessage('');
@@ -37,18 +55,21 @@ const EducationalContentShare = ({ userId }) => {
     try {
       const token = localStorage.getItem("psnToken");
       
+      // Process tags into an array
+      const tagsArray = tags.split(',')
+        .map(tag => tag.trim())
+        .filter(tag => tag !== '');
+      
       // Create educational content with PDF base64 as content
       const contentData = {
         userId,
-        title,
-        description,
+        title: title.trim(),
+        description: description.trim(),
         contentType,
-        content: contentType === 'TEXT' ? content : pdfFiles[0]?.base64 || '',
+        content: contentType === 'TEXT' ? content.trim() : pdfFiles[0]?.base64 || '',
         fileUrl: '', // No need for fileUrl since we're storing base64 in content
-        tags: tags.split(',').map(tag => tag.trim()).filter(tag => tag !== '')
+        tags: tagsArray
       };
-      
-      console.log("Creating content with data:", contentData);
       
       const response = await axios.post('/api/v1/educational/create', contentData, {
         headers: {
@@ -56,8 +77,6 @@ const EducationalContentShare = ({ userId }) => {
           'Authorization': token
         }
       });
-  
-      console.log("Content creation response:", response.data);
       
       if (response.data.status === 'success') {
         setMessage('Content shared successfully!');
@@ -80,81 +99,124 @@ const EducationalContentShare = ({ userId }) => {
   };
   
   return (
-    <div className="edu-content-container">
+    <div className="edu-content-container share-container">
+      <div className="content-header">
+        <h2>Share Educational Content</h2>
+        <p>Share your knowledge with the community</p>
+      </div>
       
-      {error && <div className="error-message">{error}</div>}
-      {message && <div className="success-message">{message}</div>}
+      {error && (
+        <div className="message-banner error">
+          <AlertTriangle size={18} />
+          <span>{error}</span>
+          <button className="close-message" onClick={() => setError('')}>
+            <X size={16} />
+          </button>
+        </div>
+      )}
+      
+      {message && (
+        <div className="message-banner success">
+          <CheckCircle size={18} />
+          <span>{message}</span>
+          <button className="close-message" onClick={() => setMessage('')}>
+            <X size={16} />
+          </button>
+        </div>
+      )}
       
       <form onSubmit={handleFormSubmit} className="edu-content-form">
         <div className="form-group">
-          <label htmlFor="title">Title:</label>
+          <label htmlFor="title">Title</label>
           <input 
             type="text" 
             id="title" 
             value={title} 
             onChange={(e) => setTitle(e.target.value)} 
+            placeholder="Enter a descriptive title"
             required 
           />
         </div>
         
         <div className="form-group">
-          <label htmlFor="description">Description:</label>
+          <label htmlFor="description">Description</label>
           <textarea 
             id="description" 
             value={description} 
             onChange={(e) => setDescription(e.target.value)} 
+            placeholder="Provide a brief description of your content"
             required 
           />
         </div>
         
-        <div className="form-group">
-          <label htmlFor="contentType">Content Type:</label>
-          <select 
-            id="contentType" 
-            value={contentType} 
-            onChange={(e) => setContentType(e.target.value)}
-          >
-            <option value="TEXT">Text</option>
-            <option value="PDF">PDF</option>
-          </select>
+        <div className="form-group content-type-selector">
+          <label>Content Type</label>
+          <div className="type-buttons">
+            <button 
+              type="button"
+              className={`type-btn ${contentType === 'TEXT' ? 'active' : ''}`}
+              onClick={() => setContentType('TEXT')}
+            >
+              <span className="btn-icon">📝</span>
+              <span>Text</span>
+            </button>
+            <button 
+              type="button"
+              className={`type-btn ${contentType === 'PDF' ? 'active' : ''}`}
+              onClick={() => setContentType('PDF')}
+            >
+              <span className="btn-icon">📄</span>
+              <span>PDF</span>
+            </button>
+          </div>
         </div>
         
         {contentType === 'TEXT' ? (
           <div className="form-group">
-            <label htmlFor="content">Content:</label>
+            <label htmlFor="content">Content</label>
             <textarea 
               id="content" 
               className="content-textarea"
               value={content} 
               onChange={(e) => setContent(e.target.value)} 
+              placeholder="Write your educational content here"
               required 
             />
           </div>
         ) : (
-          <div className="form-group">
-            <label>PDF Files:</label>
+          <div className="form-group pdf-upload-group">
+            <label>PDF Files</label>
             <MultiPDFUpload multiHandle={handlePDFUpload} />
           </div>
         )}
         
         <div className="form-group">
-          <label htmlFor="tags">Tags (comma separated):</label>
+          <label htmlFor="tags">Tags</label>
           <input 
             type="text" 
             id="tags" 
             value={tags} 
             onChange={(e) => setTags(e.target.value)} 
-            placeholder="e.g. science, biology, notes" 
+            placeholder="e.g. science, biology, notes (comma separated)" 
           />
         </div>
         
         <button 
-          type="button" 
+          type="submit" 
           className="submit-btn" 
-          onClick={handleButtonClick} 
           disabled={uploading}
         >
-          {uploading ? 'Uploading...' : 'Share Content'}
+          {uploading ? (
+            <>
+              <span className="loading-spinner"></span>
+              <span>Uploading...</span>
+            </>
+          ) : (
+            <>
+              <Upload size={18} />
+              <span>Share Content</span>
+            </>
+          )}
         </button>
       </form>
     </div>

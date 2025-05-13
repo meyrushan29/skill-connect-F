@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import PostCompose from "./PostCompose";
 import PostItem from "./PostItem";
+import SkillComparisonChart from "./SkillComparisonChart"; // Import our new component
 import { Spinner } from "react-bootstrap";
 import { getFollowingPosts } from "../../feature/followingPost/followingPostSlice";
 import { useDispatch, useSelector } from "react-redux";
@@ -160,6 +161,9 @@ function NewsFeedContent() {
         padding: '20px',
         marginTop: '0',
       }}>
+        {/* Skill Comparison Chart Component */}
+        <SkillComparisonChart />
+        
         {/* Create Post Section - Enhanced */}
         <div style={{
           backgroundColor: 'white',
@@ -213,7 +217,7 @@ function NewsFeedContent() {
                 e.currentTarget.style.backgroundColor = '#f0f2f5';
               }}
             >
-              What's on your mind?
+             What skills do you have?
             </button>
           </div>
           <hr style={{ border: 'none', borderTop: '1px solid #e4e6eb', margin: '12px 0' }} />
@@ -244,7 +248,7 @@ function NewsFeedContent() {
               }}
             >
               <Video size={24} color="#f3425f" />
-              <span>Live video</span>
+              
             </button>
             <button
               onClick={togglePostCompose}
@@ -272,7 +276,7 @@ function NewsFeedContent() {
               }}
             >
               <Image size={24} color="#45bd62" />
-              <span>Photo/video</span>
+              <span>Share Your Skill</span>
             </button>
             <button
               onClick={togglePostCompose}
@@ -300,7 +304,7 @@ function NewsFeedContent() {
               }}
             >
               <Smile size={24} color="#f7b928" />
-              <span>Feeling/activity</span>
+            
             </button>
           </div>
         </div>
