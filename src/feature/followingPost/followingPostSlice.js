@@ -6,10 +6,6 @@ const initialState = {
 };
 
 
-
-
-
-
 export const getFollowingPosts = createAsyncThunk(
   "/api/v1/followingposts",
   async (thunkAPI) => {
